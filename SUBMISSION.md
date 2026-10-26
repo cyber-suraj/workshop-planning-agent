@@ -23,11 +23,13 @@ natural-language workshop request into an exact budget calculation and a
 verified equipment-availability report. A local Llama 3.1 model handled through
 Ollama selects the next approved action, while a Python host enforces a strict
 two-step workflow, validates every argument, performs deterministic arithmetic,
-and blocks unknown, repeated, or malformed tool calls. For the sample two-day,
-30-student workshop with a INR 15,000 budget, the deterministic tools compute a
-INR 12,000 estimate, INR 3,000 remaining, and missing microphones. The project
-runs without cloud API keys and keeps all budget and inventory facts inside
-deterministic Python tools.
+and blocks unknown, repeated, or malformed tool calls. The results are presented
+in a responsive, streaming browser console that exposes each tool call, the
+budget position, the equipment board, and the final grounded summary. For the
+sample two-day, 30-student workshop with a INR 15,000 budget, the deterministic
+tools compute a INR 12,000 estimate, INR 3,000 remaining, and missing
+microphones. The project runs without cloud API keys and keeps all budget and
+inventory facts inside deterministic Python tools.
 
 ## Project title and problem statement
 
@@ -51,13 +53,22 @@ the tool signature, and terminates on errors instead of permitting blind
 retries. The model receives structured JSON tool results and writes the final
 summary.
 
+The frontend is a local Flask application with server-rendered HTML and vanilla
+CSS/JavaScript, requiring no build step or cloud assets. It streams NDJSON events
+from `POST /api/plan` so the interface can show the live tool trace, exact budget
+figures, resource chips, and final summary as soon as each verified result is
+available.
+
 Key features:
 
 - Local-only inference through Ollama.
+- Streaming browser console with a visible, auditable tool trace.
 - Exact integer arithmetic with boolean rejection.
 - Deterministic allowlist and workflow lock.
 - Graceful failure when the model server is unavailable.
+- Explicit blocked/error states in the UI when a guardrail stops a run.
 - Reproducible tool verification without an LLM.
+- Responsive desktop and mobile layouts with no external frontend assets.
 
 ## Source-code repository
 
@@ -85,7 +96,17 @@ python demo_tools.py
 # All direct tool checks passed successfully.
 ```
 
-Run the prototype:
+Start the browser prototype:
+
+```powershell
+python web_app.py
+```
+
+Open <http://127.0.0.1:5000> and select **Run planning agent**. The sample brief
+is preloaded. The interface streams the guarded workflow and renders the budget,
+inventory, and summary panels from the verified tool results.
+
+The original CLI remains available:
 
 ```powershell
 python app.py
@@ -97,30 +118,50 @@ For the sample workshop, the deterministic results are:
 - Remaining budget: INR 3,000
 - Availability: projector, Wi-Fi, whiteboard, and laptops; microphones missing
 
+Visual evidence:
+
+- [Desktop live result](docs/screenshots/web-ui-results.png)
+- [Live run workspace](docs/screenshots/web-ui-workspace.png)
+- [Mobile live result](docs/screenshots/web-ui-mobile.png)
+
 A verified terminal transcript with the exact tool calls and model response is
-available in [DEMO.md](DEMO.md). It documents two consecutive successful runs
-and serves as the demo evidence. A video or screenshot can be recorded later if
-the organizers specifically require visual media.
+available in [DEMO.md](DEMO.md). It documents the two CLI runs, the two browser
+runs, and the captured screenshots.
 
 ## README and technology stack
 
 Setup instructions, architecture, expected output, and the technology stack are
-documented in [README.md](README.md). The stack is Python 3.10+, the Ollama
-Python SDK, and `llama3.1:8b` served locally.
+documented in [README.md](README.md). The stack is Python 3.10+, Flask 3.1.3,
+the Ollama Python SDK, `llama3.1:8b` served locally, and vanilla browser
+HTML/CSS/JavaScript with no build step. Regression tests use Python's built-in
+`unittest` runner and require no additional dependency.
 
 ## Verification status
 
 - [x] `python demo_tools.py` passes for budget, deficit, alias, duplicate,
   boolean, range, non-string, and empty-input cases.
+- [x] The 17-test regression suite passes with
+  `python -m unittest discover -s tests -t . -v`.
 - [x] Host gates were exercised with a fake Ollama client: ordered happy path,
   incomplete workflow, multiple tool calls, unknown tool, out-of-order tool,
-  missing arguments, and boolean rejection.
+  and missing arguments.
+- [x] The web stream contract was exercised with a mocked agent: accepted
+  session, agent events, final and blocked-result classifications; malformed
+  and oversized requests; concurrent-run rejection; health states; and
+  security headers.
 - [x] Ollama function schemas were generated locally to confirm the exposed
   parameter types and descriptions.
-- [x] Full live run completed with Ollama 0.40.11, `llama3.1:8b`, and the final
-  summary on 26 October 2026. The correct result was reproduced twice; see
-  [DEMO.md](DEMO.md).
-- [ ] The team has reviewed the live output, README, and submission files.
+- [x] Full live CLI run completed with Ollama 0.40.11, `llama3.1:8b`, and the
+  final summary on 26 October 2026. The correct result was reproduced twice;
+  see [DEMO.md](DEMO.md).
+- [x] The Flask browser interface completed two additional live runs on
+  26 October 2026 (53s and 51s), with the same correct budget and inventory
+  results. The live trace, gauge, resource chips, and final summary rendered
+  without console errors.
+- [x] Responsive browser checks at 1440px desktop and 390px mobile showed no
+  horizontal overflow.
+- [ ] The participant has reviewed the live output, README, and submission
+  files.
 
 ## Team and contributions
 
@@ -137,8 +178,12 @@ Python SDK, and `llama3.1:8b` served locally.
 ## Originality and pre-existing work
 
 - The implementation in this repository was created for this submission.
-- The original problem brief and high-level design were provided by the team.
+- The original problem brief and high-level design were provided by the
+  participant.
 - No pre-existing project source code is included.
+- The frontend was created for this project using local HTML, CSS, and
+  JavaScript. It uses no template, UI framework, CDN, or third-party browser
+  library.
 - Third-party libraries are declared in [requirements.txt](requirements.txt) and
   retain their original licenses.
 - AI assistance must remain disclosed. See the next section.
@@ -152,7 +197,7 @@ problem brief and high-level design were supplied by the participant.
 AI-assisted development was used for the initial implementation, documentation,
 and test scaffolding. This must not be represented as unaided work.
 
-Before submission, the team must:
+Before submission, the participant must:
 
 - Read and understand `app.py`, `tools.py`, and `SKILL.md`.
 - Run `python demo_tools.py` successfully.
@@ -186,9 +231,9 @@ Open-source readiness:
 - [x] Third-party dependency licenses remain intact.
 - [x] No secrets, personal data, or local configuration are committed.
 
-The project uses open-source technologies including Python, Ollama, Pydantic,
-HTTPX, and their transitive dependencies. Those components retain their
-original licenses and copyright notices.
+The project uses open-source technologies including Python, Flask, Ollama,
+Pydantic, HTTPX, and their transitive dependencies. Those components retain
+their original licenses and copyright notices.
 
 ## Security and privacy
 
@@ -198,6 +243,11 @@ original licenses and copyright notices.
 - Tool errors stop the run and are not sent back for automatic retries.
 - The model loop is capped at five turns.
 - The application calls Ollama at `localhost`; it does not use cloud inference.
+- The Flask host binds to `127.0.0.1`, accepts a single active run, limits the
+  workshop brief to 2,000 characters and request bodies to 16 KiB, and returns
+  restrictive security headers.
+- The frontend uses same-origin assets only; there are no CDN, analytics, or
+  third-party script requests.
 - The repository contains no API keys or personal data.
 
 The demo and submission do not contain student names, contact details,
@@ -206,16 +256,16 @@ only aggregate workshop figures.
 
 ## Eligibility, registration, and conduct
 
-These are team/organizer actions, not repository features:
+These are participant/organizer actions, not repository features:
 
-- [ ] All members are eligible students under the organizer's rules.
+- [ ] The participant is eligible under the organizer's rules.
 - [ ] The official registration is complete and information is accurate.
-- [ ] The team complies with the announced team-size limit.
-- [ ] The team has read the event Code of Conduct.
+- [ ] The submission complies with the announced team-size limit.
+- [ ] The participant has read the event Code of Conduct.
 - [ ] The submission is made before the announced deadline.
-- [ ] The team will follow judging and organizer instructions.
+- [ ] The participant will follow judging and organizer instructions.
 - [ ] All third-party intellectual property and licenses are respected.
-- [ ] Team decisions and submitted work remain the team's own.
+- [ ] All decisions and submitted work remain the participant's own.
 
 ## Final submission checklist
 
@@ -223,10 +273,11 @@ These are team/organizer actions, not repository features:
 - [ ] Public repository URL entered in the organizer's submission form.
 - [x] Team name and member contribution completed for the solo submission.
 - [x] MIT license reviewed and `LICENSE` file added.
-- [ ] Demo video/screenshot added if required.
-- [ ] `python demo_tools.py` passes.
-- [x] Live Ollama demo completed and recorded in `DEMO.md`.
-- [ ] Team has reviewed the live output and final submission.
+- [x] Live browser screenshots captured and linked in the documentation.
+- [x] `python demo_tools.py` passes.
+- [x] `python -m unittest discover -s tests -t . -v` passes all 17 tests.
+- [x] Live Ollama CLI and browser demos completed and recorded in `DEMO.md`.
+- [ ] Participant has reviewed the live output and final submission.
 - [ ] AI and pre-existing-work disclosures reviewed for accuracy.
 - [ ] No secrets, personal data, or confidential records committed.
 - [ ] Eligibility and registration confirmed.

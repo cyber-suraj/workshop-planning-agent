@@ -23,11 +23,21 @@ and the Hacktoberfest Hack Day organizer's rules.
    ollama pull llama3.1:8b
    ```
 
-4. Run the deterministic checks:
+4. Run the deterministic checks and regression suite:
 
    ```powershell
    python demo_tools.py
+   python -m unittest discover -s tests -t . -v
    ```
+
+5. Start the browser interface and verify a live run when changing the host,
+   stream, or UI:
+
+   ```powershell
+   python web_app.py
+   ```
+
+   Open <http://127.0.0.1:5000>. Local inference may take 30–60 seconds.
 
 ## Contribution process
 
@@ -38,7 +48,9 @@ and the Hacktoberfest Hack Day organizer's rules.
 5. Open a pull request describing the problem, the change, and the tests run.
 
 For LLM prompt or workflow changes, include the exact command used, the model
-name, and whether the live path or only mocked tests were exercised.
+name, and whether the live path or only mocked tests were exercised. For UI
+changes, include the viewport sizes checked and whether the agent event stream
+was exercised live or with a mock.
 
 ## Code standards
 
@@ -47,6 +59,9 @@ name, and whether the live path or only mocked tests were exercised.
 - Preserve the workflow order, allowlist, argument validation, and fail-safe
   error handling in `app.py`.
 - Keep type guards strict. Do not accept booleans as integers.
+- Keep the web interface same-origin and dependency-free at runtime. Do not add
+  CDNs, analytics, external fonts, or remote tracking scripts.
+- Render model and tool text with safe DOM text nodes; do not inject it as HTML.
 - Never commit secrets, credentials, personal data, virtual environments, or
   generated model weights.
 

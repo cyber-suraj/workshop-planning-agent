@@ -79,18 +79,45 @@ def dispatch(name: str, args: object) -> dict:
         return {"error": f"{type(exc).__name__}: {exc}"}
 
 
-def run_agent(user_query: str, client: ollama.Client | None = None) -> str:
-    """Run one bounded tool-use session and return a user-facing response."""
+def run_agent(
+    user_query: str,
+    client: ollama.Client | None = None,
+    on_event: Callable[[dict[str, Any]], None] | None = None,
+) -> str:
+    """Run one bounded tool-use session and return a user-facing response.
+
+    ``on_event`` is an optional presentation hook used by the web host. Tool
+    execution and security decisions do not depend on it.
+    """
+
+    def emit(event_type: str, **fields: Any) -> None:
+        if on_event is None:
+            return
+        try:
+            on_event({"type": event_type, **fields})
+        except Exception:
+            log.exception("Agent event callback failed")
+
     if not isinstance(user_query, str) or not user_query.strip():
+        emit("error", message="Please provide a workshop request.")
         return "Please provide a workshop request."
 
     try:
         system = build_system_prompt()
     except OSError as exc:
-        return f"Cannot load SKILL.md: {exc}"
+        message = f"Cannot load SKILL.md: {exc}"
+        emit("error", message=message)
+        return message
 
     if client is None:
         client = ollama.Client(host="http://localhost:11434", timeout=120.0)
+
+    emit(
+        "session",
+        model=MODEL_NAME,
+        workflow=list(ORDER),
+        max_steps=MAX_STEPS,
+    )
 
     messages: list[Any] = [
         {"role": "system", "content": system},
@@ -103,6 +130,18 @@ def run_agent(user_query: str, client: ollama.Client | None = None) -> str:
         pending = ORDER[len(completed) : len(completed) + 1]
         declarations = [TOOLS[name] for name in pending]
 
+        emit(
+            "status",
+            state="thinking",
+            step=step,
+            next_tool=pending[0] if pending else None,
+            message=(
+                f"Requesting {pending[0]} from the local model."
+                if pending
+                else "Preparing the final summary."
+            ),
+        )
+
         request: dict[str, Any] = {
             "model": MODEL_NAME,
             "messages": messages,
@@ -114,7 +153,9 @@ def run_agent(user_query: str, client: ollama.Client | None = None) -> str:
         try:
             response = client.chat(**request)
         except Exception as exc:
-            return f"Model request failed: {type(exc).__name__}: {exc}"
+            message = f"Model request failed: {type(exc).__name__}: {exc}"
+            emit("error", step=step, message=message)
+            return message
 
         message = response.message
         messages.append(message)
@@ -130,6 +171,12 @@ def run_agent(user_query: str, client: ollama.Client | None = None) -> str:
             return text or "Both checks finished; model summary was empty."
 
         if len(calls) != 1:
+            emit(
+                "guardrail",
+                step=step,
+                rule="one_tool_per_turn",
+                message="Multiple tool calls were rejected.",
+            )
             return "Stopped: request exactly one tool per turn."
 
         call = calls[0]
@@ -138,20 +185,42 @@ def run_agent(user_query: str, client: ollama.Client | None = None) -> str:
 
         # Gate 1: allowlist and workflow-order enforcement.
         if name not in TOOLS:
+            emit(
+                "guardrail",
+                step=step,
+                rule="tool_allowlist",
+                message=f"Unknown tool was rejected: {name}.",
+            )
             return f"Stopped: unknown tool {name}."
         if not pending or name != pending[0]:
+            emit(
+                "guardrail",
+                step=step,
+                rule="workflow_order",
+                message=f"Out-of-order or repeated tool was rejected: {name}.",
+            )
             return f"Stopped: tool {name} is out of order or repeated."
 
         log.info("Step %d REQUEST %s %s", step, name, args)
+        emit("tool_call", step=step, name=name, arguments=args)
 
         # Gates 2 and 3: argument/signature validation and safe execution.
         result = dispatch(name, args)
         log.info("Step %d RESULT %s %s", step, name, result)
+        emit(
+            "tool_result",
+            step=step,
+            name=name,
+            result=result,
+            ok="error" not in result,
+        )
 
         try:
             payload = json.dumps(result)
         except (TypeError, ValueError) as exc:
-            return f"Stopped: {name}: result was not JSON serializable: {exc}"
+            message = f"Stopped: {name}: result was not JSON serializable: {exc}"
+            emit("error", step=step, message=message)
+            return message
 
         messages.append(
             {
@@ -167,7 +236,9 @@ def run_agent(user_query: str, client: ollama.Client | None = None) -> str:
 
         completed.append(name)
 
-    return "Stopped: reached MAX_STEPS without a final answer."
+    message = "Stopped: reached MAX_STEPS without a final answer."
+    emit("error", message=message)
+    return message
 
 
 if __name__ == "__main__":

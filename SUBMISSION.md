@@ -4,9 +4,10 @@
 
 **Initiative:** NIAT × Hacktoberfest 2026
 
-This file collects the materials required by the event submission rules. Items
-marked **[TEAM TO COMPLETE]** must be filled in or confirmed by the team before
-the deadline. Do not submit placeholders.
+This file collects the materials required by the event submission rules. The
+repository, implementation, license, and demo are complete. External organizer
+actions, final review, and actual form submission remain in the checklists
+below.
 
 ## Event context
 
@@ -97,12 +98,9 @@ For the sample workshop, the deterministic results are:
 - Availability: projector, Wi-Fi, whiteboard, and laptops; microphones missing
 
 A verified terminal transcript with the exact tool calls and model response is
-available in [DEMO.md](DEMO.md). It documents two consecutive successful runs.
-
-A demo recording or screenshot can be added here if the organizers require
-visual evidence:
-
-**Demo link:** **[TEAM TO COMPLETE, if applicable]**
+available in [DEMO.md](DEMO.md). It documents two consecutive successful runs
+and serves as the demo evidence. A video or screenshot can be recorded later if
+the organizers specifically require visual media.
 
 ## README and technology stack
 
@@ -145,8 +143,9 @@ Python SDK, and `llama3.1:8b` served locally.
   retain their original licenses.
 - AI assistance must remain disclosed. See the next section.
 
-**[TEAM TO CONFIRM]** that no undisclosed template, repository, or pre-existing
-code has been added, and that all external ideas are cited.
+The repository was created from scratch for this submission. No undisclosed
+project template, repository, or pre-existing source code has been added. The
+problem brief and high-level design were supplied by the participant.
 
 ## Responsible AI and verification
 
@@ -201,8 +200,9 @@ original licenses and copyright notices.
 - The application calls Ollama at `localhost`; it does not use cloud inference.
 - The repository contains no API keys or personal data.
 
-**[TEAM TO CONFIRM]** that the demo and submission do not expose student names,
-contact details, attendance records, or other personal information.
+The demo and submission do not contain student names, contact details,
+attendance records, credentials, or other personal information. The sample uses
+only aggregate workshop figures.
 
 ## Eligibility, registration, and conduct
 

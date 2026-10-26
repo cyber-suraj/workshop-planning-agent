@@ -60,10 +60,11 @@ Key features:
 
 ## Source-code repository
 
-**Public repository URL:** **[TEAM TO COMPLETE]**
+**Public repository URL:**
+<https://github.com/cyber-suraj/workshop-planning-agent>
 
-Suggested repository description: "Bounded local LLM agent for deterministic
-workshop budgeting and equipment checks."
+Repository description: "Bounded local LLM agent for deterministic workshop
+budgeting and equipment checks."
 
 ## Working prototype / demo
 
@@ -165,7 +166,8 @@ Before submission, the team must:
 
 ## Open-source and licensing
 
-**Public repository:** **[TEAM TO COMPLETE]**
+**Public repository:**
+<https://github.com/cyber-suraj/workshop-planning-agent>
 
 **License:** MIT License. Copyright (c) 2026 Suraj Balasaheb Khanase. See
 [LICENSE](LICENSE).
@@ -176,7 +178,8 @@ this choice for the solo submission.
 
 Open-source readiness:
 
-- [ ] Repository is public and accessible without credentials.
+- [x] Repository is public and accessible without credentials:
+  <https://github.com/cyber-suraj/workshop-planning-agent>.
 - [x] A `LICENSE` file is present and matches this document.
 - [x] Setup and test instructions work from a clean environment.
 - [x] Contribution and conduct expectations are documented in
@@ -216,7 +219,8 @@ These are team/organizer actions, not repository features:
 
 ## Final submission checklist
 
-- [ ] Public repository URL added above and in the submission form.
+- [x] Public repository URL added to the README and submission files.
+- [ ] Public repository URL entered in the organizer's submission form.
 - [x] Team name and member contribution completed for the solo submission.
 - [x] MIT license reviewed and `LICENSE` file added.
 - [ ] Demo video/screenshot added if required.

@@ -4,6 +4,8 @@
 
 **Author:** Suraj Balasaheb Khanase
 
+**Repository:** <https://github.com/cyber-suraj/workshop-planning-agent>
+
 A bounded, local AI agent for workshop budgeting and equipment checks. The
 language model only chooses actions; Python controls tool availability,
 validates arguments, performs exact arithmetic, and owns all inventory facts.
@@ -99,6 +101,13 @@ tool, a repeated/out-of-order tool, or retrying after an error stops the run.
 
 Requires Python 3.10+ and a local
 [Ollama](https://ollama.com/download) installation.
+
+Clone the public repository:
+
+```powershell
+git clone https://github.com/cyber-suraj/workshop-planning-agent.git
+cd workshop-planning-agent
+```
 
 ### Windows PowerShell
 
